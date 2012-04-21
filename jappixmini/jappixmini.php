@@ -68,7 +68,7 @@ register_hook('plugin_settings', 'addon/jappixmini/jappixmini.php', 'jappixmini_
 register_hook('plugin_settings_post', 'addon/jappixmini/jappixmini.php', 'jappixmini_settings_post');
 
 register_hook('page_end', 'addon/jappixmini/jappixmini.php', 'jappixmini_script');
-register_hook('authenticate', 'addon/jappixmini/jappixmini.php', 'jappixmini_login');
+register_hook('login_hook', 'addon/jappixmini/jappixmini.php', 'jappixmini_login');
 
 register_hook('cron', 'addon/jappixmini/jappixmini.php', 'jappixmini_cron');
 
@@ -98,7 +98,7 @@ unregister_hook('plugin_settings', 'addon/jappixmini/jappixmini.php', 'jappixmin
 unregister_hook('plugin_settings_post', 'addon/jappixmini/jappixmini.php', 'jappixmini_settings_post');
 
 unregister_hook('page_end', 'addon/jappixmini/jappixmini.php', 'jappixmini_script');
-unregister_hook('authenticate', 'addon/jappixmini/jappixmini.php', 'jappixmini_login');
+unregister_hook('login_hook', 'addon/jappixmini/jappixmini.php', 'jappixmini_login');
 
 unregister_hook('cron', 'addon/jappixmini/jappixmini.php', 'jappixmini_cron');
 
@@ -470,13 +470,20 @@ function jappixmini_login(&$a, &$o) {
     // create client secret on login to be able to encrypt jabber passwords
 
     // for setDB and str_sha1, needed by jappixmini_addon_set_client_secret
-    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/jappix/php/get.php?t=js&amp;f=datastore.js~jsjac.js"></script>'."\r\n";
+    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/jappix/php/get.php?t=js&amp;f=datastore.js~jsjac.js"></script>'."\n";
 
     // for jappixmini_addon_set_client_secret
-    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/lib.js"></script>'."\r\n";
+    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/lib.js"></script>'."\n";
 
     // save hash of password
-    $o = str_replace("<form ", "<form onsubmit=\"jappixmini_addon_set_client_secret(this.elements['id_password'].value);return true;\" ", $o);
+    $a->page['htmlhead'] .= '<script  type="text/javascript">'."\n";
+    $a->page['htmlhead'] .= ' jQuery(document).ready(function() {'."\n";
+    $a->page['htmlhead'] .= '  var pw_input = document.getElementById("id_password");'."\n";
+    $a->page['htmlhead'] .= '  $(pw_input.form).submit(function(){'."\n";
+    $a->page['htmlhead'] .= '   jappixmini_addon_set_client_secret(pw_input.value);return true;'."\n";
+    $a->page['htmlhead'] .= '  });'."\n";
+    $a->page['htmlhead'] .= ' });'."\n";
+    $a->page['htmlhead'] .= '</script>'."\n";
 }
 
 function jappixmini_cron(&$a, $d) {
