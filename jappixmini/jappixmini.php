@@ -103,6 +103,9 @@ unregister_hook('login_hook', 'addon/jappixmini/jappixmini.php', 'jappixmini_log
 unregister_hook('cron', 'addon/jappixmini/jappixmini.php', 'jappixmini_cron');
 
 unregister_hook('about_hook', 'addon/jappixmini/jappixmini.php', 'jappixmini_download_source');
+
+// purge lists of jabber addresses
+q("DELETE FROM `pconfig` WHERE `cat`='jappixmini' AND `k` LIKE 'id:%%'");
 }
 
 function jappixmini_plugin_admin(&$a, &$o) {
@@ -372,13 +375,17 @@ function jappixmini_settings_post(&$a,&$b) {
 		$old_server = get_pconfig($uid,'jappixmini','server');
 		if ($server!=$old_server) $purge = 1;
 
+		$activate = intval($b['jappixmini-activate']);
+		$was_activated = get_pconfig($uid,'jappixmini','activate');
+		if ($was_activated && !$activate) $purge = 1;
+
 		set_pconfig($uid,'jappixmini','username',$username);
 		set_pconfig($uid,'jappixmini','server',$server);
 		set_pconfig($uid,'jappixmini','bosh',trim($b['jappixmini-bosh']));
 		set_pconfig($uid,'jappixmini','password',trim($b['jappixmini-encrypted-password']));
 		set_pconfig($uid,'jappixmini','autosubscribe',intval($b['jappixmini-autosubscribe']));
 		set_pconfig($uid,'jappixmini','autoapprove',intval($b['jappixmini-autoapprove']));
-		set_pconfig($uid,'jappixmini','activate',intval($b['jappixmini-activate']));
+		set_pconfig($uid,'jappixmini','activate',$activate);
 		set_pconfig($uid,'jappixmini','encrypt',$encrypt);
 		info( 'Jappix Mini settings saved.' );
 
