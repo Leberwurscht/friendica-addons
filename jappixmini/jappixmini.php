@@ -57,6 +57,7 @@ reply with encrypted_address to Alice, who does
 
 Interface for this:
 GET /jappixmini/?role=%s&signed_address=%s&dfrn_id=%s
+(or better, using POST to avoid too long URLs)
 
 Response:
 json({"status":"ok", "encrypted_address":"%s"})
@@ -150,10 +151,13 @@ function jappixmini_init(&$a) {
 	// module page where other Friendica sites can submit Jabber addresses to and also can query Jabber addresses
         // of local users
 
+        // only if role is given
+	$role = $_REQUEST["role"];
+	if (!$role) return;
+
 	$dfrn_id = $_REQUEST["dfrn_id"];
 	if (!$dfrn_id) killme();
 
-	$role = $_REQUEST["role"];
 	if ($role=="pub") {
 		$r = q("SELECT * FROM `contact` WHERE LENGTH(`pubkey`) AND `dfrn-id`='%s' LIMIT 1",
 			dbesc($dfrn_id)
@@ -538,11 +542,11 @@ function jappixmini_cron(&$a, $d) {
 				if ($now-$timestamp<3600*24*7) continue;
 			}
 
-			// construct base retrieval address
+			// construct retrieval address
 			$pos = strpos($request, "/dfrn_request/");
 			if ($pos===false) continue;
 
-			$base = substr($request, 0, $pos)."/jappixmini?role=$role";
+			$url = substr($request, 0, $pos)."/jappixmini?role=$role";
 
 			// construct own address
 			$username = get_pconfig($uid, 'jappixmini', 'username');
@@ -556,13 +560,15 @@ function jappixmini_cron(&$a, $d) {
 			$signed_address = "";
 			$encrypt_func($address, $signed_address, $key);
 
-			// construct request url
+			// construct request parameters
 			$signed_address_hex = bin2hex($signed_address);
-			$url = $base."&signed_address=$signed_address_hex&dfrn_id=".urlencode($dfrn_id);
+			$params = array();
+			$params["signed_address"] = $signed_address_hex;
+			$params["dfrn_id"] = $dfrn_id;
 
 			try {
 				// send request
-				$answer_json = fetch_url($url);
+				$answer_json = post_url($url, $params);
 
 				// parse answer
 				$answer = json_decode($answer_json);
