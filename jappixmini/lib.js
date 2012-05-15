@@ -97,7 +97,7 @@ function jappixmini_addon_decrypt_password(encrypted_password, callback) {
 	});
 }
 
-function jappixmini_manage_roster(contacts, contacts_hash, autoapprove, autosubscribe) {
+function jappixmini_manage_roster_approve(contacts, autoapprove) {
 	// listen for subscriptions
 	con.registerHandler('presence',function(presence){
 		var type = presence.getType();
@@ -141,10 +141,9 @@ function jappixmini_manage_roster(contacts, contacts_hash, autoapprove, autosubs
 			console.log("Accepted "+xid+" ("+name+") for chat.");
 		}
 	});
+}
 
-	// autosubscribe
-	if (!autosubscribe) return;
-
+function jappixmini_manage_roster_autosubscribe(contacts, contacts_hash) {
 	var stored_hash = getPersistent("jappix-mini", "contacts-hash");
 	var contacts_changed = (stored_hash != contacts_hash); // stored_hash gets updated later if everything was successful
 	if (!contacts_changed) return;
@@ -223,7 +222,6 @@ function jappixmini_manage_roster(contacts, contacts_hash, autoapprove, autosubs
 		setPersistent("jappix-mini", "contacts-hash", contacts_hash);
 		console.log("Autosubscribe done.");
 	});
-
 }
 
 function jappixmini_addon_subscribe() {
@@ -251,6 +249,7 @@ function jappixmini_addon_start(server, username, proxy, bosh, encrypted, passwo
             disconnectMini();
             removeDB('jappix-mini', 'dom');
             removePersistent("jappix-mini", "contacts-hash");
+            console.log("settings changed - disconnected");
         }
         setDB("jappix-mini", "settings-identifier", settings_identifier);
 
@@ -263,13 +262,24 @@ function jappixmini_addon_start(server, username, proxy, bosh, encrypted, passwo
         // start jappix mini
         MINI_NICKNAME = nickname;
         LOCK_HOST = "off";
+DEVELOPER="on";
         launchMini(true, false, server, username, password);
 
-        // increase priority over other Jabber clients - does not seem to work?
-        var priority = 101;
-        presenceMini(null,null,priority);
+	jappixmini_manage_roster_approve(contacts, autoapprove);
 
-        jappixmini_manage_roster(contacts, contacts_hash, autoapprove, autosubscribe)
+	onconnected = function(){
+		console.log("Connected");
+		// increase priority over other Jabber clients - does not seem to work?
+                // => priority must be sent with each presence packet in Jappix Mini
+//		var priority = 101;
+//		console.log("send presence");
+//		presenceMini(null,null,priority,null,null,null,null,function(pr){console.log("Presence sent");console.log(pr.xml())});
+
+		if (autosubscribe) jappixmini_manage_roster_autosubscribe(contacts, contacts_hash);
+	};
+
+	if (!con.connected()) con.registerHandler('onconnect', onconnected);
+	else onconnected();
     }
 
     // decrypt password if necessary
