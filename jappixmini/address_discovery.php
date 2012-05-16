@@ -40,15 +40,15 @@ json({"status":"ok", "encrypted_address":"%s"})
 
 */
 
-function jappixmini_serve_addresses($_REQUEST) {
+function jappixmini_serve_addresses($_REQ) {
 	// module page where other Friendica sites can submit Jabber addresses to and also can query Jabber addresses
         // of local users
 
         // only if role is given
-	$role = $_REQUEST["role"];
+	$role = $_REQ["role"];
 	if (!$role) return;
 
-	$dfrn_id = $_REQUEST["dfrn_id"];
+	$dfrn_id = $_REQ["dfrn_id"];
 	if (!$dfrn_id) killme();
 
 	if ($role=="pub") {
@@ -77,7 +77,7 @@ function jappixmini_serve_addresses($_REQUEST) {
 
 	// save the Jabber address we received
 	try {
-		$signed_address_hex = $_REQUEST["signed_address"];
+		$signed_address_hex = $_REQ["signed_address"];
 		$signed_address = hex2bin($signed_address_hex);
 
 		$trusted_address = "";
