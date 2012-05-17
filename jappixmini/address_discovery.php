@@ -89,7 +89,7 @@ function jappixmini_serve_addresses($_REQ) {
 	}
 
 	// do not return an address if user deactivated plugin
-	$activated = get_pconfig($uid, 'jappixmini', 'activate');
+	$activated = jappixmini_activated();
 	if (!$activated) killme();
 
 	// return the requested Jabber address

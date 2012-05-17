@@ -30,8 +30,10 @@ function jappixmini_script(&$a,&$s) {
     $uid = local_user();
     if(!$uid) return;
 
+    $activate = jappixmini_activated();
+    if (!$activate) return;
+
     if (!get_config("jappixmini","provided_server")) {
-	    $activate = get_pconfig(local_user(),'jappixmini','activate');
 	    $username = get_pconfig(local_user(),'jappixmini','username');
 	    $username = str_replace("'", "\\'", $username);
 	    $server = get_pconfig(local_user(),'jappixmini','server');
@@ -49,7 +51,6 @@ function jappixmini_script(&$a,&$s) {
 	    $autosubscribe = intval($autosubscribe);
     }
     else {
-	$activate = 1;
         $r = q("SELECT `nickname` FROM `user` WHERE `uid`=%d", local_user());
         $username = $r[0]["nickname"];
 	$server = get_config("jappixmini", "provided_server");
@@ -59,8 +60,6 @@ function jappixmini_script(&$a,&$s) {
         $autoapprove = 1;
         $autosubscribe = 1;
     }
-
-    if (!$activate) return;
 
     $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/jappix/php/get.php?t=js&amp;g=mini.xml"></script>'."\r\n";
     $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/jappixmini/jappix/php/get.php?t=js&amp;f=presence.js~caps.js~name.js~roster.js"></script>'."\r\n";

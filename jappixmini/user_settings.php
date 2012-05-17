@@ -5,6 +5,12 @@
 // This file is dual-licensed under the MIT license (see MIT.txt) and the AGPL license (see jappix/COPYING).
 //
 
+function jappixmini_activated() {
+	if (get_config("jappixmini","provided_server")) return 1;
+	if (!( $uid=local_user() )) return 0;
+	return intval(get_pconfig($uid, 'jappixmini', 'activate'));
+}
+
 function jappixmini_settings(&$a, &$s) {
     // only if server does not provide own server
     if (get_config("jappixmini","provided_server")) return;
