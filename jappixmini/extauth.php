@@ -101,7 +101,7 @@ while True:
                 opener.addheaders.append(("Cookie", cookie))
             else:
                 data["password"] = password
-        elif parts[1]=="isuser":
+        elif parts[0]=="isuser":
             username = parts[1]
 	    # server = parts[2]
 
