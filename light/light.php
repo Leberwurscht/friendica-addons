@@ -11,11 +11,48 @@
 require_once("authentication.php");
 
 function light_install() {
+  register_hook('plugin_settings', 'addon/light/light.php', 'light_settings');
+  register_hook('plugin_settings_post', 'addon/light/light.php', 'light_settings_post');
 }
 
 
 function light_uninstall() {
+  unregister_hook('plugin_settings', 'addon/light/light.php', 'light_settings');
+  unregister_hook('plugin_settings_post', 'addon/light/light.php', 'light_settings_post');
 }
+
+function light_settings(&$a, &$s) {
+  if(! local_user()) return;
+  $uid = local_user();
+
+  $activated = get_pconfig($uid, 'light', 'activated');
+  $activated = intval($activated) ? ' checked="checked"' : '';
+
+  $s .= '<div class="settings-block">';
+  $s .= '<h3>Light addon settings</h3>';
+  $s .= '<div>';
+  $s .= '<label for="light-activated">Activate addon</label>';
+  $s .= ' <input id="light-activated" type="checkbox" name="light-activated" value="1"'.$activated.' />';
+  $s .= '<br />';
+  $s .= '<input type="submit" name="light-submit" value="' . t('Submit') . '" />';
+  $s .= '</div>';
+  $s .= '</div>';
+
+  // TODO: A function called "reauthorize friend" for friends who lose their token. Should generate
+  //       a file containing a new token and the necessary URLs which can be sent to the friend.
+  //       The friend should be able to import this file into the TearDownWalls firefox extension.
+}
+
+function light_settings_post(&$a, $b) {
+  if(! local_user()) return;
+  $uid = local_user();
+
+  if (!$b['light-submit']) return;
+
+  $activated = intval($b['light-activated']);
+  set_pconfig($uid, 'light', 'activated', $activated);
+}
+
 
 function light_module() {}
 function light_init(&$a) {

@@ -8,6 +8,10 @@ function light_authenticate() {
 
 	if (count($r)) {
 		$uid = intval($r[0]["uid"]);
+		$activated = intval(get_pconfig($uid, "light", "activated"));
+		if (!$activated) { // deactivated by user
+			return false;
+		}
 
 		// k has format "token:$cid"
 		$k = $r[0]["k"];
