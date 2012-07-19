@@ -1,0 +1,30 @@
+Light protocol
+==============
+
+This addon adds a very simple protocol to your Friendica installation that can be used to communicate with
+people that do not have some account in the federated social network.
+No connections are opened by Friendica. The other side needs to poll the stream.
+
+API:
+
+/light/intro?target=...&url=...&name=...&avatar=...&body=... [returns token]
+ - introduce to a Friendica user and request a token to communicate with him
+ - 'target' is the nickname of the Friendica user
+ - 'url' is the URL of the requester, e.g. his homepage
+ - 'name' is the nickname of the requester
+ - 'avatar' is the avatar URL of the requester
+ - 'body' is some notice that should be added to the introduction
+
+/light/stream [POST token=...]
+ - display the items the Friendica user shares with you, as atom feed
+ - only available if the Friendica user accepted your introduction
+
+/light/post&title=...&body=...&in_reply_to=... [POST token=...]
+ - posts to the Friendica user
+ - 'title' is the title of the post
+ - 'body' is the content of the post
+ - 'in_reply_to' may be empty or the URI of a parent post (for comments)
+
+TODO:
+ - /light/message for private messages
+ - user setting to activate/deactivate
