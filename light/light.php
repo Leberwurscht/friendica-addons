@@ -202,18 +202,7 @@ function light_init(&$a) {
 
     require_once('include/auth.php');
     require_once('include/items.php');
-    $bbfeed = get_feed_for($a, $auth["id"], $nickname, False, -2);
-
-    // replace bbcode by html
-    require_once("include/bbcode.php");
-    function callback($m) {
-      $r = '<content type="html">';
-      $r .= htmlspecialchars(bbcode($m[3]));
-      $r .= '</content>';
-
-      return $r;
-    }
-    $feed = preg_replace_callback('~<content\s+(.*?)type="text"(.*?)>(.*?)</content>~si', callback, $bbfeed);
+    $feed = get_feed_for($a, $auth["id"], $nickname, False, -2, True);
 
     echo $feed;
     killme();
