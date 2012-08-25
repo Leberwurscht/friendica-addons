@@ -15,7 +15,6 @@ function light_install() {
   register_hook('plugin_settings_post', 'addon/light/light.php', 'light_settings_post');
 }
 
-
 function light_uninstall() {
   unregister_hook('plugin_settings', 'addon/light/light.php', 'light_settings');
   unregister_hook('plugin_settings_post', 'addon/light/light.php', 'light_settings_post');
@@ -80,7 +79,9 @@ function light_init(&$a) {
   }
 
   if (count($a->argv)==2 && $a->argv[1]=="intro") {
-    if ($uid==-1) die("Invalid target.");
+    if ($uid==-1) {
+      die('{"successful": 0, "error": "Invalid target."}');
+    }
 
     $normalised_link = normalise_link($_REQUEST["url"]);
 
@@ -90,7 +91,7 @@ function light_init(&$a) {
       dbesc(NETWORK_LIGHT),
       dbesc($normalised_link)
     );
-    if (count($r)) die("Already introduced.");
+    if (count($r)) die('{"successful": 0, "error": "Already introduced."}');
 
     // insert into contact table
     // note: notify set to 0, otherwise contact will not show up in acl selector
@@ -144,11 +145,39 @@ function light_init(&$a) {
       'otype'        => 'intro'
     ));
 
-    // generate token, return it and save the hash
+    // generate token and save the hash
     $token = random_string();
-
     set_pconfig($uid, "light", "token:$cid", hash('whirlpool', $token));
-    echo $token;
+
+    // output token and the configuration for teardownwalls
+    $feed_url = json_encode($a->get_baseurl() . '/light/stream');
+    $target_url = json_encode($a->get_baseurl() . '/light/post');
+    $token = json_encode($token);
+    echo <<<EOD
+{
+  "token": $token,
+  "successful": 1,
+  "teardownwalls_config": {
+    "feed": {
+      "url": $feed_url,
+      "method":"post",
+      "content": {
+        "token": $token
+      }
+    },
+    "target": {
+      "url": $target_url,
+      "method": "post",
+      "content": {
+        "token": $token,
+        "body":"{body}",
+        "title":"{title}",
+        "in_reply_to":"{in_reply_to}"
+      }
+    }
+  }
+}
+EOD;
     killme();
   }
   else if (count($a->argv)==2 && $a->argv[1]=="post") {
@@ -210,4 +239,25 @@ function light_init(&$a) {
 }
 
 function light_content(&$a) {
+  $o = '';
+
+  if (count($a->argv)>=2 && $a->argv[1]=="getfriends") {
+    // check target
+    $target = $a->argv[2];
+    $r = q("SELECT * FROM `user` WHERE `nickname`='%s'", dbesc($target));
+    if (!count($r)) {
+      $o .= "<p>Unknown user ".htmlentities($target).".</p>";
+      return $o;
+    }
+
+    // print message
+    $o .= "<p>To get friends with ".htmlentities($target)." without having a Friendica account install the TearDownWalls addon.</p>";
+    $o .= "<p>Then click onto the TearDownWalls icon to add me.</p>";
+
+    // add link tag
+    $href = htmlentities($a->get_baseurl()."/light/intro/?target=".urlencode($target));
+    $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" href="'.$href.'"/>'."\r\n";
+  }
+
+  return $o;
 }
