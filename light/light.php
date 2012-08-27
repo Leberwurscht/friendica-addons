@@ -27,11 +27,16 @@ function light_settings(&$a, &$s) {
   $activated = get_pconfig($uid, 'light', 'activated');
   $activated = intval($activated) ? ' checked="checked"' : '';
 
+  $categories = get_pconfig($uid, 'light', 'categories');
+
   $s .= '<div class="settings-block">';
   $s .= '<h3>Light addon settings</h3>';
   $s .= '<div>';
   $s .= '<label for="light-activated">Activate addon</label>';
   $s .= ' <input id="light-activated" type="checkbox" name="light-activated" value="1"'.$activated.' />';
+  $s .= '<br />';
+  $s .= '<label for="light-categories">Only show this tags to TearDownWalls users (comma-separated):</label>';
+  $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlentities($categories).'" />';
   $s .= '<br />';
   $s .= '<input type="submit" name="light-submit" value="' . t('Submit') . '" />';
   $s .= '</div>';
@@ -50,6 +55,9 @@ function light_settings_post(&$a, $b) {
 
   $activated = intval($b['light-activated']);
   set_pconfig($uid, 'light', 'activated', $activated);
+
+  $categories = $b['light-categories'];
+  set_pconfig($uid, 'light', 'categories', $categories);
 }
 
 
@@ -149,10 +157,16 @@ function light_init(&$a) {
     $token = random_string();
     set_pconfig($uid, "light", "token:$cid", hash('whirlpool', $token));
 
+    // get categories
+    $categories = get_pconfig($uid, "light", "categories");
+    if (!$categories) $categories = "";
+    $categories = explode(",", $categories);
+
     // output token and the configuration for teardownwalls
     $feed_url = json_encode($a->get_baseurl() . '/light/stream');
     $target_url = json_encode($a->get_baseurl() . '/light/post');
     $token = json_encode($token);
+    $categories = json_encode($categories);
     echo <<<EOD
 {
   "token": $token,
@@ -163,7 +177,8 @@ function light_init(&$a) {
       "method":"post",
       "content": {
         "token": $token
-      }
+      },
+      "categories": $categories
     },
     "target": {
       "url": $target_url,
