@@ -178,11 +178,12 @@ function light_init(&$a) {
   "teardownwalls_config": {
     "feed": {
       "url": $feed_url,
-      "method":"post",
+      "method": "post",
       "content": {
         "token": $token
       },
-      "categories": $categories
+      "categories": $categories,
+      "verbs": ["http://activitystrea.ms/schema/1.0/post", ""]
     },
     "target": {
       "url": $target_url,
