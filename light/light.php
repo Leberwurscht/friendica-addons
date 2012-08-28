@@ -159,8 +159,12 @@ function light_init(&$a) {
 
     // get categories
     $categories = get_pconfig($uid, "light", "categories");
-    if (!$categories) $categories = "";
-    $categories = explode(",", $categories);
+    if (!$categories) {
+      $categories = Array();
+    }
+    else {
+      $categories = explode(",", $categories);
+    }
 
     // output token and the configuration for teardownwalls
     $feed_url = json_encode($a->get_baseurl() . '/light/stream');
