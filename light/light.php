@@ -234,6 +234,8 @@ EOD;
     $cmntdata['verb'] = ACTIVITY_POST;
     $cmntdata['body'] = $_REQUEST["body"];
 
+    $cmntdata['wall'] = 1; // this is necessary that we get the posts from get_feed_for. TODO: what implications does this have?
+
     require_once('include/auth.php');
     require_once('include/items.php');
     $item = item_store($cmntdata);
