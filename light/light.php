@@ -271,14 +271,17 @@ function light_content(&$a) {
       $o .= "<p>Unknown user ".htmlentities($target).".</p>";
       return $o;
     }
+    else {
+      $username = $r[0]["username"];
+    }
 
     // print message
-    $o .= "<p>To get friends with ".htmlentities($target)." without having a Friendica account install the TearDownWalls addon.</p>";
+    $o .= "<p>To get friends with ".htmlentities($username)." without having a Friendica account install the TearDownWalls addon.</p>";
     $o .= "<p>Then click onto the TearDownWalls icon to add me.</p>";
 
     // add link tag
     $href = htmlentities($a->get_baseurl()."/light/intro/?target=".urlencode($target));
-    $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" href="'.$href.'"/>'."\r\n";
+    $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlentities($username).'" href="'.$href.'"/>'."\r\n";
   }
 
   return $o;
