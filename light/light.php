@@ -209,7 +209,7 @@ EOD;
     $cmntdata['verb'] = ACTIVITY_POST;
     $cmntdata['gravity'] = 6;
     $cmntdata['uid'] = $auth["uid"];
-    $cmntdata['wall'] = 0;
+    $cmntdata['wall'] = 1; // this is necessary that we get the posts from get_feed_for. TODO: what implications does this have?
     $cmntdata['uri'] = 'light::'.random_string();
     if (!$_REQUEST["in_reply_to"]) {
       $cmntdata['parent-uri'] = $cmntdata['uri'];
@@ -225,17 +225,14 @@ EOD;
 
     if($auth['readonly']) return;
 
-    $cmntdata["author-name"] = $r[0]["name"];
-    $cmntdata["author-link"] = $r[0]["url"];
-    $cmntdata["author-avatar"] = $r[0]["photo"];
+    $cmntdata["author-name"] = $auth["name"];
+    $cmntdata["author-link"] = $auth["url"];
+    $cmntdata["author-avatar"] = $auth["photo"];
 
     $cmntdata['app'] = 'light';
     $cmntdata['created'] = datetime_convert();
     $cmntdata['edited'] = datetime_convert();
-    $cmntdata['verb'] = ACTIVITY_POST;
     $cmntdata['body'] = $_REQUEST["body"];
-
-    $cmntdata['wall'] = 1; // this is necessary that we get the posts from get_feed_for. TODO: what implications does this have?
 
     require_once('include/auth.php');
     require_once('include/items.php');
