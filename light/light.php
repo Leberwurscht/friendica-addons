@@ -240,6 +240,58 @@ EOD;
     echo "stored";
     killme();
   }
+  else if (count($a->argv)==2 && $a->argv[1]=="like") {
+    $auth = light_authenticate();
+    if (!$auth) die("Not authenticated.");
+
+    // adapted from addon/facebook/facebook.php
+    $likedata = array();
+    $likedata['verb'] = ACTIVITY_LIKE;
+    $likedata['gravity'] = 3;
+    $likedata['uid'] = $auth["uid"];
+    $likedata['wall'] = 0;
+    $likedata['uri'] = 'light::'.random_string();
+
+    if (!$_REQUEST["in_reply_to"]) return;
+    $likedata['parent-uri'] = $_REQUEST["in_reply_to"];
+
+    $likedata['unseen'] = 1;
+
+    $likedata['contact-id'] = $auth["id"];
+
+    if($auth['readonly']) return;
+
+    $likedata["author-name"] = $auth["name"];
+    $likedata["author-link"] = $auth["url"];
+    $likedata["author-avatar"] = $auth["photo"];
+
+    $likedata['app'] = 'light';
+    $likedata['created'] = datetime_convert();
+
+    // get orig post
+    $op = q("SELECT * FROM `item` WHERE `uri` = %s AND `uid` = %d LIMIT 1",
+      dbesc($likedata['parent-uri']),
+      $uid
+    );
+    if (count($op)) $orig_post = $op[0];
+    else return;
+
+    $author = '[url=' . $likedata['author-link'] . ']' . $likedata['author-name'] . '[/url]';
+    $objauthor = '[url=' . $orig_post['author-link'] . ']' . $orig_post['author-name'] . '[/url]';
+    $post_type = t('status');
+    $plink = '[url=' . $orig_post['plink'] . ']' . $post_type . '[/url]';
+    $likedata['object-type'] = ACTIVITY_OBJ_NOTE;
+
+    $likedata['body'] = sprintf( t('%1$s likes %2$s\'s %3$s'), $author, $objauthor, $plink);
+    $likedata['object'] = '<object><type>' . ACTIVITY_OBJ_NOTE . '</type><local>1</local>' .
+        '<id>' . $orig_post['uri'] . '</id><link>' . xmlify('<link rel="alternate" type="text/html" href="' . xmlify($orig_post['plink']) . '" />') . '</link><title>' . $orig_post['title'] . '</title><content>' . $orig_post['body'] . '</content></object>';
+
+    require_once('include/auth.php');
+    require_once('include/items.php');
+    $item = item_store($likedata);
+    echo "stored";
+    killme();
+  }
   else if (count($a->argv)==2 && $a->argv[1]=="stream") {
     $auth = light_authenticate();
     if (!$auth) die("Not authenticated.");

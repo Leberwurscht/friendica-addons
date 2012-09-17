@@ -19,11 +19,15 @@ API:
  - display the items the Friendica user shares with you, as atom feed
  - only available if the Friendica user accepted your introduction
 
-/light/post&title=...&body=...&in_reply_to=... [POST token=...]
+/light/post?title=...&body=...&in_reply_to=... [POST token=...]
  - posts to the Friendica user
  - 'title' is the title of the post
  - 'body' is the content of the post
  - 'in_reply_to' may be empty or the URI of a parent post (for comments)
+
+/light/like?in_reply_to=... [POST token=...]
+ - to like a post of a Friendica user
+ - 'in_reply_to' must be the URI of a parent post
 
 TODO:
  - /light/message for private messages
