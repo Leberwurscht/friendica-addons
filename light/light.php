@@ -183,7 +183,7 @@ function light_init(&$a) {
         "token": $token
       },
       "categories": $categories,
-      "verbs": ["http://activitystrea.ms/schema/1.0/post", ""]
+      "verbs": ["http://activitystrea.ms/schema/1.0/post", "http://activitystrea.ms/schema/1.0/like", ""]
     },
     "target": {
       "url": $target_url,
@@ -192,6 +192,14 @@ function light_init(&$a) {
         "token": $token,
         "body":"{body}",
         "title":"{title}",
+        "in_reply_to":"{in_reply_to}"
+      }
+    },
+    "like_target": {
+      "url": $like_target_url,
+      "method": "post",
+      "content": {
+        "token": $token,
         "in_reply_to":"{in_reply_to}"
       }
     }
