@@ -88,7 +88,9 @@ function light_settings(&$a, &$s) {
   $s .= ' <input id="light-activated" type="checkbox" name="light-activated" value="1"'.$activated.' />';
   $s .= '<br />';
   $s .= '<label for="light-categories">Only show this tags to TearDownWalls users (comma-separated):</label>';
-  $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlentities($categories).'" />';
+  $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlspecialchars($categories).'" />';
+  $s .= '<br />';
+  $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/list').'">list of light contacts</a>';
   $s .= '<br />';
   $s .= '<input type="submit" name="light-submit" value="' . t('Submit') . '" />';
   $s .= '</div>';
@@ -332,6 +334,20 @@ EOD;
     echo $feed;
     killme();
   }
+  else if (count($a->argv)==2 && $a->argv[1]=="tdwfile") {
+    $username = $_REQUEST["username"];
+    $token = $_REQUEST["token"];
+    $categories = $_REQUEST["categories"];
+
+    // output token and the configuration for teardownwalls
+    $config_json = tdw_config($username, $token, $categories);
+
+    header('Content-disposition: attachment; filename=connection.json');
+    header('Content-type: application/json');
+
+    echo $config_json;
+    killme();
+  }
 }
 
 function light_content(&$a) {
@@ -356,6 +372,58 @@ function light_content(&$a) {
     // add link tag
     $href = htmlentities($a->get_baseurl()."/light/intro/?target=".urlencode($target));
     $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlentities($username).'" href="'.$href.'"/>'."\r\n";
+  }
+  else if (count($a->argv)>=2 && $a->argv[1]=="list") {
+    if(! local_user()) return;
+    $uid = local_user();
+
+    $r = q("SELECT * FROM `pconfig` WHERE `cat`='light' AND `k` LIKE 'token:%%' AND `uid`=%d", $uid);
+    foreach ($r as $row) {
+      $k = $row["k"];
+      $p = strpos($k, ":");
+      $cid = intval(substr($k, $p+1));
+
+      // retrieve from contact table
+      $c = q("SELECT * FROM `contact` WHERE `id`=%d AND `uid`=%d", $cid, $uid);
+      if (!count($c)) { // contact deleted, so delete left-over token
+        q("DELETE FROM `pconfig` WHERE `cat`='light' AND `k`='%s' AND `uid`=%d", $k, $uid);
+        continue;
+      }
+      $contact = $c[0];
+
+      $sig = hash_hmac('sha256', "reauthenticate $cid", session_id());
+      $o .= '<div><img style="height:1.5em;" src="'.htmlspecialchars($contact["photo"]).'"> <a href="'.htmlspecialchars($contact["url"]).'">'.htmlspecialchars($contact["name"]).'</a> (<a href="'.htmlspecialchars($a->get_baseurl().'/light/reauthenticate?cid='.$cid.'&csrf_sig='.$sig).'" onclick="return confirm(\'Communication will be broken until contact uses newly generated token!\')">reauthenticate</a>)</div>';
+    }
+  }
+  else if (count($a->argv)>=2 && $a->argv[1]=="reauthenticate") {
+    if(! local_user()) return;
+    $uid = local_user();
+
+    $cid = intval($_REQUEST["cid"]);
+
+    // verify CSRF signature
+    $sig = $_REQUEST["csrf_sig"];
+    $proper_sig = hash_hmac('sha256', "reauthenticate $cid", session_id());
+    if ($sig != $proper_sig) return;
+
+    // get contact
+    $c = q("SELECT * FROM `contact` WHERE `id`=%d AND `uid`=%d", $cid, $uid);
+    if (!count($c)) return;
+    $contact = $c[0];
+
+    // get own username
+    $r = q("SELECT * FROM `user` WHERE `uid`=%d", $uid);
+    $own_name = $r[0]["username"];
+
+    // generate new token
+    $token = random_string();
+    set_pconfig($uid, "light", "token:$cid", hash('whirlpool', $token));
+
+    // output
+    $o .= '<p>The new authentication token for '.htmlspecialchars($contact["name"]).' is '.htmlspecialchars($token).'.</p>';
+
+    $categories = get_pconfig($uid, "light", "categories");
+    $o .= '<form action="'.htmlspecialchars($a->get_baseurl().'/light/tdwfile').'" method="post"><input type="hidden" name="categories" value="'.htmlspecialchars($categories).'"><input type="hidden" name="username" value="'.htmlspecialchars($own_name).'"><input type="hidden" name="token" value="'.htmlspecialchars($token).'"> <p>You can <input type="submit" value="download"> the TearDownWalls connection file and send it to the contact.</p></form>';
   }
 
   return $o;
