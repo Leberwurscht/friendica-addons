@@ -10,6 +10,58 @@
 
 require_once("authentication.php");
 
+function tdw_config($username, $token, $categories) {
+  $a = get_app();
+  $feed_url = json_encode($a->get_baseurl() . '/light/stream');
+  $target_url = json_encode($a->get_baseurl() . '/light/post');
+  $like_target_url = json_encode($a->get_baseurl() . '/light/like');
+  $token = json_encode($token);
+  $username = json_encode($username);
+
+  if (!$categories) {
+    $categories = Array();
+  }
+  else {
+    $categories = explode(",", $categories);
+  }
+  $categories = json_encode($categories);
+
+  $config = <<<EOD
+{
+  "name": $username,
+  "feed": {
+    "url": $feed_url,
+    "method": "post",
+    "content": {
+      "token": $token
+    },
+    "categories": $categories,
+    "verbs": ["http://activitystrea.ms/schema/1.0/post", "http://activitystrea.ms/schema/1.0/like", ""]
+  },
+  "target": {
+    "url": $target_url,
+    "method": "post",
+    "content": {
+      "token": $token,
+      "body":"{body}",
+      "title":"{title}",
+      "in_reply_to":"{in_reply_to}"
+    }
+  },
+  "like_target": {
+    "url": $like_target_url,
+    "method": "post",
+    "content": {
+      "token": $token,
+      "in_reply_to":"{in_reply_to}"
+    }
+  }
+}
+EOD;
+
+  return $config;
+}
+
 function light_install() {
   register_hook('plugin_settings', 'addon/light/light.php', 'light_settings');
   register_hook('plugin_settings_post', 'addon/light/light.php', 'light_settings_post');
@@ -159,51 +211,16 @@ function light_init(&$a) {
 
     // get categories
     $categories = get_pconfig($uid, "light", "categories");
-    if (!$categories) {
-      $categories = Array();
-    }
-    else {
-      $categories = explode(",", $categories);
-    }
 
     // output token and the configuration for teardownwalls
-    $feed_url = json_encode($a->get_baseurl() . '/light/stream');
-    $target_url = json_encode($a->get_baseurl() . '/light/post');
+    $config_json = tdw_config($username, $token, $categories);
     $token = json_encode($token);
-    $categories = json_encode($categories);
+    // TODO: avatar
     echo <<<EOD
 {
   "token": $token,
   "successful": 1,
-  "teardownwalls_config": {
-    "feed": {
-      "url": $feed_url,
-      "method": "post",
-      "content": {
-        "token": $token
-      },
-      "categories": $categories,
-      "verbs": ["http://activitystrea.ms/schema/1.0/post", "http://activitystrea.ms/schema/1.0/like", ""]
-    },
-    "target": {
-      "url": $target_url,
-      "method": "post",
-      "content": {
-        "token": $token,
-        "body":"{body}",
-        "title":"{title}",
-        "in_reply_to":"{in_reply_to}"
-      }
-    },
-    "like_target": {
-      "url": $like_target_url,
-      "method": "post",
-      "content": {
-        "token": $token,
-        "in_reply_to":"{in_reply_to}"
-      }
-    }
-  }
+  "teardownwalls_config": $config_json
 }
 EOD;
     killme();
