@@ -358,7 +358,7 @@ function light_content(&$a) {
     $target = $a->argv[2];
     $r = q("SELECT * FROM `user` WHERE `nickname`='%s'", dbesc($target));
     if (!count($r)) {
-      $o .= "<p>Unknown user ".htmlentities($target).".</p>";
+      $o .= "<p>Unknown user ".htmlspecialchars($target).".</p>";
       return $o;
     }
     else {
@@ -366,12 +366,12 @@ function light_content(&$a) {
     }
 
     // print message
-    $o .= "<p>To get friends with ".htmlentities($username)." without having a Friendica account install the TearDownWalls addon.</p>";
+    $o .= "<p>To get friends with ".htmlspecialchars($username)." without having a Friendica account install the TearDownWalls addon.</p>";
     $o .= "<p>Then click onto the TearDownWalls icon to add me.</p>";
 
     // add link tag
-    $href = htmlentities($a->get_baseurl()."/light/intro/?target=".urlencode($target));
-    $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlentities($username).'" href="'.$href.'"/>'."\r\n";
+    $href = htmlspecialchars($a->get_baseurl()."/light/intro/?target=".urlencode($target));
+    $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlspecialchars($username).'" href="'.$href.'"/>'."\r\n";
   }
   else if (count($a->argv)>=2 && $a->argv[1]=="list") {
     if(! local_user()) return;
