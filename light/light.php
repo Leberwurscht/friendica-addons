@@ -87,7 +87,7 @@ function light_settings(&$a, &$s) {
   $s .= '<label for="light-activated">Activate addon</label>';
   $s .= ' <input id="light-activated" type="checkbox" name="light-activated" value="1"'.$activated.' />';
   $s .= '<br />';
-  $s .= '<label for="light-categories">Only show this tags to TearDownWalls users (comma-separated):</label>';
+  $s .= '<label for="light-categories">Only show these tags to TearDownWalls users (comma-separated):</label>';
   $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlspecialchars($categories).'" />';
   $s .= '<br />';
   $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/list').'">list of light contacts</a>';
@@ -376,6 +376,8 @@ function light_content(&$a) {
   else if (count($a->argv)>=2 && $a->argv[1]=="list") {
     if(! local_user()) return;
     $uid = local_user();
+
+    $o .= '<h2>List of contacts over light protocol</h2>';
 
     $r = q("SELECT * FROM `pconfig` WHERE `cat`='light' AND `k` LIKE 'token:%%' AND `uid`=%d", $uid);
     foreach ($r as $row) {
