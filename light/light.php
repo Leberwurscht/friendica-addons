@@ -271,6 +271,15 @@ EOD;
     $auth = light_authenticate();
     if (!$auth) die("Not authenticated.");
 
+    // check if there is already a like
+    $exists = q("SELECT * FROM `item` WHERE `uid` = %d AND `parent-uri` = '%s' AND `contact-id` = %d AND `verb` = '%s' LIMIT 1",
+      $auth["uid"],
+      dbesc($_REQUEST["in_reply_to"]),
+      $auth["id"],
+      ACTIVITY_LIKE
+    );
+    if (count($exists)) return;
+
     // adapted from addon/facebook/facebook.php
     $likedata = array();
     $likedata['verb'] = ACTIVITY_LIKE;
@@ -298,7 +307,8 @@ EOD;
     // get orig post
     $op = q("SELECT * FROM `item` WHERE `uri` = %s AND `uid` = %d LIMIT 1",
       dbesc($likedata['parent-uri']),
-      $uid
+//      $uid !!! TODO: why did it work with this????
+      $auth[$uid]
     );
     if (count($op)) $orig_post = $op[0];
     else return;
