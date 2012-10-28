@@ -12,9 +12,9 @@ require_once("authentication.php");
 
 function tdw_config($username, $token, $categories) {
   $a = get_app();
-  $feed_url = json_encode($a->get_baseurl() . '/light/stream');
-  $target_url = json_encode($a->get_baseurl() . '/light/post');
-  $like_target_url = json_encode($a->get_baseurl() . '/light/like');
+  $feed_url = json_encode($a->get_baseurl() . '/light/v0.1/stream');
+  $target_url = json_encode($a->get_baseurl() . '/light/v0.1/post');
+  $like_target_url = json_encode($a->get_baseurl() . '/light/v0.1/like');
   $token = json_encode($token);
   $username = json_encode($username);
 
@@ -140,7 +140,7 @@ function light_init(&$a) {
     }
   }
 
-  if (count($a->argv)==2 && $a->argv[1]=="intro") {
+  if (count($a->argv)==3 && $a->argv[1]=="v0.1" && $a->argv[2]=="intro") {
     if ($uid==-1) {
       die('{"successful": 0, "error": "Invalid target."}');
     }
@@ -227,7 +227,7 @@ function light_init(&$a) {
 EOD;
     killme();
   }
-  else if (count($a->argv)==2 && $a->argv[1]=="post") {
+  else if (count($a->argv)==3 && $a->argv[1]=="v0.1" && $a->argv[2]=="post") {
     $auth = light_authenticate();
     if (!$auth) die("Not authenticated.");
 
@@ -267,7 +267,7 @@ EOD;
     echo "stored";
     killme();
   }
-  else if (count($a->argv)==2 && $a->argv[1]=="like") {
+  else if (count($a->argv)==3 && $a->argv[1]=="v0.1" && $a->argv[2]=="like") {
     $auth = light_authenticate();
     if (!$auth) die("Not authenticated.");
 
@@ -329,7 +329,7 @@ EOD;
     echo "stored";
     killme();
   }
-  else if (count($a->argv)==2 && $a->argv[1]=="stream") {
+  else if (count($a->argv)==3 && $a->argv[1]=="v0.1" && $a->argv[2]=="stream") {
     $auth = light_authenticate();
     if (!$auth) die("Not authenticated.");
 
@@ -380,7 +380,7 @@ function light_content(&$a) {
     $o .= "<p>Then click onto the TearDownWalls icon to add me.</p>";
 
     // add link tag
-    $href = htmlspecialchars($a->get_baseurl()."/light/intro/?target=".urlencode($target));
+    $href = htmlspecialchars($a->get_baseurl()."/light/v0.1/intro/?target=".urlencode($target));
     $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlspecialchars($username).'" href="'.$href.'"/>'."\r\n";
   }
   else if (count($a->argv)>=2 && $a->argv[1]=="list") {

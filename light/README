@@ -1,34 +1,44 @@
 Light protocol
 ==============
 
-This addon adds a very simple protocol to your Friendica installation that can be used to communicate with
-people that do not have some account in the federated social network.
-No connections are opened by Friendica. The other side needs to poll the stream.
+This addon adds a very simple protocol to your Friendica installation which can be used to communicate with
+people that do not have an account in the federated social network.
+To achieve this, it implements a simple HTTP API. No connections are opened by Friendica. This means the other
+side needs to poll the stream.
+POST or GET may be used, but POST should be used for the security token.
 
-API:
+API v0.1:
 
-/light/intro?target=...&url=...&name=...&avatar=...&body=... [returns token]
- - introduce to a Friendica user and request a token to communicate with him
+/light/v0.1/intro?target=...&url=...&name=...&avatar=...&body=... [returns token]
+ -> introduce to a Friendica user and request a token to communicate with him
  - 'target' is the nickname of the Friendica user
  - 'url' is the URL of the requester, e.g. his homepage
  - 'name' is the nickname of the requester
  - 'avatar' is the avatar URL of the requester
  - 'body' is some notice that should be added to the introduction
 
-/light/stream [POST token=...]
- - display the items the Friendica user shares with you, as atom feed
+/light/v0.1/stream [POST token=...]
+ -> display the items the Friendica user shares with you, as atom feed
  - only available if the Friendica user accepted your introduction
 
-/light/post?title=...&body=...&in_reply_to=... [POST token=...]
- - posts to the Friendica user
+/light/v0.1/post?title=...&body=...&in_reply_to=... [POST token=...]
+ -> posts to the Friendica user
  - 'title' is the title of the post
  - 'body' is the content of the post
  - 'in_reply_to' may be empty or the URI of a parent post (for comments)
+ - only available if the Friendica user accepted your introduction
 
-/light/like?in_reply_to=... [POST token=...]
- - to like a post of a Friendica user
+/light/v0.1/like?in_reply_to=... [POST token=...]
+ -> to like a post of a Friendica user
  - 'in_reply_to' must be the URI of a parent post
+ - only available if the Friendica user accepted your introduction
 
 TODO:
+ - user setting to activate/deactivate DONE
+ - API versioning DONE
+ - don't provide possibility to check whether a contact is accepted or not + warn Friendica user that profile url is not verified
+ - use get_feed_for to generate html
+ - notify Friendica user if light contact writes a comment or likes an item
  - /light/message for private messages
- - user setting to activate/deactivate
+ - unlike, dislike, undislike
+ - delete messages
