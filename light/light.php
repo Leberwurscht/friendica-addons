@@ -408,6 +408,9 @@ function light_content(&$a) {
       }
       $contact = $c[0];
 
+      // do not display pending contacts
+      if ($contact["pending"]) continue;
+
       $invalid = get_pconfig($uid, "light", "invalid:$cid");
       if ($invalid && ($invalid=intval($invalid))) {
         $invalid = " ($invalid invalid reintroductions)";
