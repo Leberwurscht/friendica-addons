@@ -38,9 +38,9 @@ TODO:
  - user setting to activate/deactivate DONE
  - API versioning DONE
  - currently everyone can check whether someone is a contact of you by trying to introduce with the same URL and seeing whether it fails. Better solution: produce same result page for introducer, but to not create an introduction. Instead, warn Friendica user. DONE
+ - use get_feed_for to generate html DONE
  - wall-to-wall posting is not a good solution
  - warn Friendica user that profile url is not verified
- - use get_feed_for to generate html
  - notify Friendica user if light contact writes a comment or likes an item
  - /light/message for private messages
  - unlike, dislike, undislike
