@@ -16,6 +16,7 @@ API v0.1:
  - 'name' is the nickname of the requester
  - 'avatar' is the avatar URL of the requester
  - 'body' is some notice that should be added to the introduction
+ - Returns a json object with properties 'token' (string), 'successful' (bool), 'teardownwalls_config' (object). Note: successful may be true even if the introduction failed because you are already introduced. Otherwise, anyone could check whom you are friends with.
 
 /light/v0.1/stream [POST token=...]
  -> display the items the Friendica user shares with you, as atom feed
@@ -36,7 +37,9 @@ API v0.1:
 TODO:
  - user setting to activate/deactivate DONE
  - API versioning DONE
- - don't provide possibility to check whether a contact is accepted or not + warn Friendica user that profile url is not verified
+ - currently everyone can check whether someone is a contact of you by trying to introduce with the same URL and seeing whether it fails. Better solution: produce same result page for introducer, but to not create an introduction. Instead, warn Friendica user. DONE
+ - wall-to-wall posting is not a good solution
+ - warn Friendica user that profile url is not verified
  - use get_feed_for to generate html
  - notify Friendica user if light contact writes a comment or likes an item
  - /light/message for private messages

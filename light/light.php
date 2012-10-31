@@ -87,7 +87,7 @@ function light_settings(&$a, &$s) {
   $s .= '<label for="light-activated">Activate addon</label>';
   $s .= ' <input id="light-activated" type="checkbox" name="light-activated" value="1"'.$activated.' />';
   $s .= '<br />';
-  $s .= '<label for="light-categories">Only show these tags to TearDownWalls users (comma-separated):</label>';
+  $s .= '<label for="light-categories">Only show these tags to TearDownWalls users (comma-separated) [note: list is public]:</label>';
   $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlspecialchars($categories).'" />';
   $s .= '<br />';
   $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/list').'">list of light contacts</a>';
@@ -145,15 +145,35 @@ function light_init(&$a) {
       die('{"successful": 0, "error": "Invalid target."}');
     }
 
-    $normalised_link = normalise_link($_REQUEST["url"]);
+    // output token and the configuration for teardownwalls
+    $token = random_string(64, RANDOM_STRING_HEX);
+    $categories = get_pconfig($uid, "light", "categories");
+    $config_json = tdw_config($username, $token, $categories);
+    // TODO: avatar
+    echo <<<EOD
+{
+  "token": "$token",
+  "successful": true,
+  "teardownwalls_config": $config_json
+}
+EOD;
 
     // check if already introduced
+    $normalised_link = normalise_link($_REQUEST["url"]);
     $r = q("SELECT `id` FROM `contact` WHERE `uid`=%d AND `network`='%s' AND `nurl`='%s'",
       $uid,
       dbesc(NETWORK_LIGHT),
       dbesc($normalised_link)
     );
-    if (count($r)) die('{"successful": 0, "error": "Already introduced."}');
+    if (count($r)) {
+      $cid = $r[0]["id"];
+      $invalid = get_pconfig($uid, "light", "invalid:$cid");
+      if (!$invalid) $invalid = 0;
+      $invalid = intval($invalid);
+      $invalid++;
+      set_pconfig($uid, "light", "invalid:$cid", "$invalid");
+      killme();
+    }
 
     // insert into contact table
     // note: notify set to 0, otherwise contact will not show up in acl selector
@@ -207,24 +227,8 @@ function light_init(&$a) {
       'otype'        => 'intro'
     ));
 
-    // generate token and save the hash
-    $token = random_string();
+    // save the hash of the generated token
     set_pconfig($uid, "light", "token:$cid", hash('whirlpool', $token));
-
-    // get categories
-    $categories = get_pconfig($uid, "light", "categories");
-
-    // output token and the configuration for teardownwalls
-    $config_json = tdw_config($username, $token, $categories);
-    $token = json_encode($token);
-    // TODO: avatar
-    echo <<<EOD
-{
-  "token": $token,
-  "successful": 1,
-  "teardownwalls_config": $config_json
-}
-EOD;
     killme();
   }
   else if (count($a->argv)==3 && $a->argv[1]=="v0.1" && $a->argv[2]=="post") {
@@ -397,14 +401,23 @@ function light_content(&$a) {
 
       // retrieve from contact table
       $c = q("SELECT * FROM `contact` WHERE `id`=%d AND `uid`=%d", $cid, $uid);
-      if (!count($c)) { // contact deleted, so delete left-over token
-        q("DELETE FROM `pconfig` WHERE `cat`='light' AND `k`='%s' AND `uid`=%d", $k, $uid);
+      if (!count($c)) { // contact deleted, so delete left-over token and invalid introductions count
+        q("DELETE FROM `pconfig` WHERE `cat`='light' AND `k`='%s' AND `uid`=%d", "token:$cid", $uid);
+        q("DELETE FROM `pconfig` WHERE `cat`='light' AND `k`='%s' AND `uid`=%d", "invalid:$cid", $uid);
         continue;
       }
       $contact = $c[0];
 
+      $invalid = get_pconfig($uid, "light", "invalid:$cid");
+      if ($invalid && ($invalid=intval($invalid))) {
+        $invalid = " ($invalid invalid reintroductions)";
+      }
+      else {
+        $invalid = '';
+      }
+
       $sig = hash_hmac('sha256', "reauthenticate $cid", session_id());
-      $o .= '<div><img style="height:1.5em;" src="'.htmlspecialchars($contact["photo"]).'"> <a href="'.htmlspecialchars($contact["url"]).'">'.htmlspecialchars($contact["name"]).'</a> (<a href="'.htmlspecialchars($a->get_baseurl().'/light/reauthenticate?cid='.$cid.'&csrf_sig='.$sig).'" onclick="return confirm(\'Communication will be broken until contact uses newly generated token!\')">reauthenticate</a>)</div>';
+      $o .= '<div><img style="height:1.5em;" src="'.htmlspecialchars($contact["photo"]).'"> <a href="'.htmlspecialchars($contact["url"]).'">'.htmlspecialchars($contact["name"]).'</a> (<a href="'.htmlspecialchars($a->get_baseurl().'/light/reauthenticate?cid='.$cid.'&csrf_sig='.$sig).'" onclick="return confirm(\'Communication will be broken until contact uses newly generated token!\')">reauthenticate</a>)'.$invalid.'</div>';
     }
   }
   else if (count($a->argv)>=2 && $a->argv[1]=="reauthenticate") {
