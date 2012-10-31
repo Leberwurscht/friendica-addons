@@ -309,10 +309,9 @@ EOD;
     $likedata['created'] = datetime_convert();
 
     // get orig post
-    $op = q("SELECT * FROM `item` WHERE `uri` = %s AND `uid` = %d LIMIT 1",
+    $op = q("SELECT * FROM `item` WHERE `uri` = '%s' AND `uid` = %d LIMIT 1",
       dbesc($likedata['parent-uri']),
-//      $uid !!! TODO: why did it work with this????
-      $auth[$uid]
+      $auth["uid"]
     );
     if (count($op)) $orig_post = $op[0];
     else return;
