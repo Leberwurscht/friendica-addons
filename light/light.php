@@ -90,7 +90,8 @@ function light_settings(&$a, &$s) {
   $s .= '<label for="light-categories">Only show these tags to TearDownWalls users (comma-separated) [note: list is public]:</label>';
   $s .= ' <input id="light-categories" type="text" name="light-categories" value="'.htmlspecialchars($categories).'" />';
   $s .= '<br />';
-  $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/list').'">list of light contacts</a>';
+  $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/list').'">List of light contacts</a><br />';
+  $s .= '<a href="'.htmlspecialchars($a->get_baseurl() . '/light/user_tdw').'">Setup Friendica account for TearDownWalls</a><br />';
   $s .= '<br />';
   $s .= '<input type="submit" name="light-submit" value="' . t('Submit') . '" />';
   $s .= '</div>';
@@ -385,6 +386,42 @@ function light_content(&$a) {
     // add link tag
     $href = htmlspecialchars($a->get_baseurl()."/light/v0.1/intro/?target=".urlencode($target));
     $a->page['htmlhead'] .= '<link rel="alternate" type="application/teardownwalls_intro" title="'.htmlspecialchars($username).'" href="'.$href.'"/>'."\r\n";
+  }
+  else if (count($a->argv)>=2 && $a->argv[1]=="user_tdw") {
+    // this is a configuration page where a Friendica user can generate a TearDownWalls connection file that
+    // allows him to crosspost to his Friendica account and read his Friendica stream.
+
+    // makes use of the Friendica API:
+    // /api/statuses/update.json?status=test&group_allow[]=&in_reply_to_status_id=&verb=
+    // /api/statuses/home_timeline.atom
+
+    if(! local_user()) return;
+    $uid = local_user();
+
+    $o .= '<h2>Create TearDownWalls configuration to crosspost to your Friendica account</h2>';
+
+    $o .= '<form>';
+    $o .= '<p>Select the groups you want to post to from TearDownWalls</p>';
+
+    $o .= '<input type="checkbox" name="public" value="1"> Public<br />';
+    $r = q("SELECT * FROM `group` WHERE `uid`=%d", $uid);
+    foreach ($r as $row) {
+      $o .= '<input type="checkbox" name="group_allow" value="'.$row['id'].'"> '.htmlspecialchars($row['name']).'<br />';
+    }
+
+    $o .= 'Type your Friendica password: <input type="password" name="password"> (warning: will not be verified)<br />';
+    $o .= '<button id="download">Download TearDownWalls connection file</button>';
+    $o .= '</form>';
+
+    $r = q("SELECT * FROM `user` WHERE `uid`=%d", $uid);
+    $username = json_encode(json_encode("Friendica/".$r[0]["username"]));
+    $nickname = json_encode($r[0]["nickname"]);
+    $feed_url = json_encode(json_encode($a->get_baseurl() . '/api/statuses/home_timeline.atom'));
+    $target_url = json_encode(json_encode($a->get_baseurl() . '/api/statuses/update.json'));
+
+    $a->page['htmlhead'] .= "<script type=\"text/javascript\">var nickname = $nickname; var username = $username; var feed = $feed_url; var target = $target_url;</script>\r\n";
+    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/light/base64.js"></script>'."\r\n";
+    $a->page['htmlhead'] .= '<script type="text/javascript" src="' . $a->get_baseurl() . '/addon/light/user_tdw.js"></script>'."\r\n";
   }
   else if (count($a->argv)>=2 && $a->argv[1]=="list") {
     if(! local_user()) return;
