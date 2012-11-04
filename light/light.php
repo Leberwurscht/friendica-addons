@@ -96,10 +96,6 @@ function light_settings(&$a, &$s) {
   $s .= '<input type="submit" name="light-submit" value="' . t('Submit') . '" />';
   $s .= '</div>';
   $s .= '</div>';
-
-  // TODO: A function called "reauthorize friend" for friends who lose their token. Should generate
-  //       a file containing a new token and the necessary URLs which can be sent to the friend.
-  //       The friend should be able to import this file into the TearDownWalls firefox extension.
 }
 
 function light_settings_post(&$a, $b) {
