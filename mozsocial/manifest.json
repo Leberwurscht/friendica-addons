@@ -1,0 +1,10 @@
+{
+  "services": {
+    "social": {
+    "name": "Friendica",
+    "iconURL": "./icon.png",
+    "workerURL": "./worker.js",
+    "sidebarURL": "./sidebar.html",
+   }
+  }
+}

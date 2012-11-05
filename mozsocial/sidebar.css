@@ -1,0 +1,22 @@
+div.notification {
+	border: 1px solid #000;
+	font-size: .8em;
+	clear: both;
+}
+
+div.notification.seen {
+	background-color: #aaa;
+}
+
+img.avatar {
+	height: 40px;
+	width: 40px;
+	margin-right: 1em;
+	margin-bottom: 1em;
+}
+
+.date {
+	color: #555;
+	font-size: .8em;
+	white-space: nowrap;
+}
