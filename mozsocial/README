@@ -1,2 +1,7 @@
 Mozilla Social API for Friendica
 ================================
+
+about:config entry:
+
+Name: social.manifest.friendica
+Value: {"origin":"http://friendica.yoursite.com","name":"Friendica Messenger","workerURL":"http://friendica.yoursite.com/addon/mozsocial/worker.js","iconURL":"http://friendica.yoursite.com/addon/mozsocial/icon.png","sidebarURL":"http://friendica.yoursite.com/addon/mozsocial/sidebar.html"}
