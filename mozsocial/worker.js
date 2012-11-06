@@ -1,4 +1,4 @@
-var userdata;
+var userdata = {};
 
 var end = location.href.indexOf("worker.js");
 var baselocation = location.href.substr(0, end);
@@ -37,8 +37,8 @@ onconnect = function(e) {
               "unshareCancelAccessKey": "C"
             },
             images: {
-              'share': baselocation + "/share.png",
-              'unshare': baselocation + "/unshare.png",
+              'share': baselocation + "share.png",
+              'unshare': baselocation + "unshare.png",
             }
           }});
         }
@@ -65,68 +65,89 @@ function get_user() {
 
   var xhr = new XMLHttpRequest();
   xhr.open("GET", baselocation + "../../mozsocial/userdata", true);
-  xhr.onload = function(e) { // TODO: error handling
+  xhr.onload = function(e) {
     try {
       var json = xhr.responseText;
       userdata = JSON.parse(json);
-      apiPort.postMessage({topic: "social.user-profile", data: userdata});
     }
     catch(e) {
-      apiPort.postMessage({topic: "social.user-profile", data: null});
+      userdata = {};
     }
-  }
+
+    apiPort.postMessage({topic: "social.user-profile", data: userdata});
+  };
+  xhr.onerror = function(e) {
+    userdata = {};
+    apiPort.postMessage({topic: "social.user-profile", data: userdata});
+  };
+
   xhr.send();
 }
 
 function get_notifications() {
   if (!apiPort) return;
-  if (!userdata) return;
 
   var xhr = new XMLHttpRequest();
   xhr.open("GET", baselocation + "../../ping", true);
-  xhr.onload = function(e) { // TODO: error handling
-    broadcast("notify", xhr.responseText);
+  xhr.onerror = function(e) {
+    broadcast("notify", null);
+  };
+  xhr.onload = function(e) {
+    if (userdata.userName) {
+      // if logged in, update notifications in sidebar
+      broadcast("notify", xhr.responseText);
+    }
+    else {
+      // if not logged in, reset sidebar
+      broadcast("notify", null);
+      return;
+    }
 
     var xml = xhr.responseXML;
 
-    var network = xml.getElementsByTagName("net")[0].firstChild.nodeValue; // TODO: home?
+    // TODO: home counter?
+
+    var network = xml.getElementsByTagName("net")[0].firstChild.nodeValue;
     network = parseInt(network);
     apiPort.postMessage({topic: 'social.ambient-notification', data: {
       name: "net",
-      iconURL: baselocation + "/notifications.png",
+      iconURL: baselocation + "notifications.png",
       counter: network,
-//      contentPanel: baselocation + "/statusPanel.html"
+      contentPanel: baselocation + "statusPanel.html"
     }});
 
     var mail = xml.getElementsByTagName("mail")[0].firstChild.nodeValue;
     mail = parseInt(mail);
     apiPort.postMessage({topic: 'social.ambient-notification', data: {
       name: "mail",
-      iconURL: baselocation + "/messages.png",
+      iconURL: baselocation + "messages.png",
       counter: mail,
-//      contentPanel: baselocation + "/statusPanel.html"
+      contentPanel: baselocation + "statusPanel.html"
     }});
 
     var intro = xml.getElementsByTagName("intro")[0].firstChild.nodeValue;
     intro = parseInt(intro);
     apiPort.postMessage({topic: 'social.ambient-notification', data: {
       name: "intro",
-      iconURL: baselocation + "/contacts.png",
+      iconURL: baselocation + "contacts.png",
       counter: intro,
-//      contentPanel: baselocation + "/statusPanel.html"
+      contentPanel: baselocation + "statusPanel.html"
     }});
 
     var notify = xml.getElementsByTagName("notif")[0].getAttribute("count");
     notify = parseInt(notify);
     apiPort.postMessage({topic: 'social.ambient-notification', data: {
       name: "notify",
-      iconURL: baselocation + "/notify.png",
+      iconURL: baselocation + "notify.png",
       counter: notify,
-//      contentPanel: baselocation + "/statusPanel.html"
+      contentPanel: baselocation + "statusPanel.html"
     }});
-  }
+  };
   xhr.send();
 }
 
-setInterval(get_notifications, 2000);
-setInterval(get_user, 2000);
+var poll_interval = 40*1000;
+//poll_interval = 5*1000; // for debugging
+
+setInterval(get_notifications, poll_interval);
+setInterval(get_user, poll_interval);

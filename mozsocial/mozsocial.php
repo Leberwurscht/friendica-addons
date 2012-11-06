@@ -17,7 +17,10 @@ function mozsocial_uninstall() {
 function mozsocial_module() {}
 function mozsocial_init(&$a) {
   if (count($a->argv)==2 && $a->argv[1]=="userdata") {
-    if(!( $uid = local_user() )) return;
+    if(!( $uid = local_user() )) {
+      echo "{}";
+      killme();
+    }
 
     $user = q("SELECT * FROM `contact` WHERE `uid`=%d AND `self`=1", $uid);
     $user = $user[0];

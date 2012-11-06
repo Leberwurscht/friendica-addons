@@ -1,46 +1,49 @@
 navigator.mozSocial.getWorker().port.onmessage = function onmessage(e) {
-    var topic = e.data.topic;
-    var data = e.data.data;
+  var topic = e.data.topic;
+  var data = e.data.data;
 
-    if (topic != "notify") return;
+  if (topic != "notify") return;
 
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(data, "text/xml");
-    var $doc = jQuery(doc);
+  if (data) {
+    jQuery("#sign-in").hide();
+    jQuery("#nav-notifications-menu").show();
+  }
+  else {
+    jQuery("#sign-in").show();
+    jQuery("#nav-notifications-menu").hide();
+    return;
+  }
 
-    var $body = jQuery("body");
-    $body.empty();
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(data, "text/xml");
+  var $doc = jQuery(doc);
 
-    $doc.find("notif > note").each(function() {
-      var $this = jQuery(this);
+  $ul = jQuery('#nav-notifications-menu');
+  $ul.empty();
 
-      var $div = jQuery('<div class="notification">');
-      if ($this.attr("seen")=="notify-seen") $div.addClass("seen");
+  $doc.find("notif > note").each(function() {
+    var $this = jQuery(this);
 
-      var $imga = jQuery('<a>');
-      $imga.attr("href", $this.attr("url"));
-      $imga.attr("target", "friendica");
-      $div.append($imga);
+    var $li = jQuery('<li>');
+    if ($this.attr("seen")=="notify-seen") $li.addClass("notify-seen");
+    else $li.addClass("notify-unseen");
+    $ul.append($li);
 
-      var $img = jQuery('<img class="avatar">');
-      $img.attr("src", $this.attr("photo"));
-      $imga.append($img);
+    var $a = jQuery('<a>');
+    $a.attr("href", $this.attr("href"));
+    $a.attr("target", "friendica");
+    $li.append($a);
 
-      var $span = jQuery('<span class="message">');
-      $span.text($this.text());
-      $div.append($span);
+    var $img = jQuery('<img>');
+    $img.attr("src", $this.attr("photo"));
+    $a.append($img);
 
-      $div.append(" ");
+    $span = jQuery('<span class="text">');
+    $span.text($this.text());
+    $a.append($span);
 
-      $datea = jQuery('<a>');
-      $datea.attr("href", $this.attr("href"));
-      $datea.attr("target", "friendica");
-      $div.append($datea);
-
-      $date = jQuery('<span class="date">');
-      $date.text($this.attr("date"));
-      $datea.append($date);
-
-      $body.append($div);
-    });
+    $date = jQuery('<span class="notif-when">');
+    $date.text($this.attr("date"));
+    $a.append($date);
+  });
 };

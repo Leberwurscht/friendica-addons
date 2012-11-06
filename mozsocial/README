@@ -5,3 +5,10 @@ about:config entry:
 
 Name: social.manifest.friendica
 Value: {"origin":"http://friendica.yoursite.com","name":"Friendica Messenger","workerURL":"http://friendica.yoursite.com/addon/mozsocial/worker.js","iconURL":"http://friendica.yoursite.com/addon/mozsocial/icon.png","sidebarURL":"http://friendica.yoursite.com/addon/mozsocial/sidebar.html"}
+
+TODO:
+- Firefox extension that adds the about:config entry
+- Friendica seems to get confused when you click log out while the worker is doing its work - suddenly you are logged in again
+- sharing/unsharing
+- better contentPanels for ambient-notification icons
+- when browser is closed, session is also closed
