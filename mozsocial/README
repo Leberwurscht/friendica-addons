@@ -7,8 +7,14 @@ Name: social.manifest.friendica
 Value: {"origin":"http://friendica.yoursite.com","name":"Friendica Messenger","workerURL":"http://friendica.yoursite.com/addon/mozsocial/worker.js","iconURL":"http://friendica.yoursite.com/addon/mozsocial/icon.png","sidebarURL":"http://friendica.yoursite.com/addon/mozsocial/sidebar.html"}
 
 TODO:
-- Firefox extension that adds the about:config entry
+- in sidebar, special characters in usernames are displayed htmlencoded
+- persistent login PARTIALLY DONE
+	- remove login cookie on logout DONE
+	- prohibit password changing and admin functionality if session is started with login cookie NOT POSSIBLE AS ADDON
+	- function to delete all remembered sessions DONE
+	- only try login cookie if we have one, otherwise we get login failed messages over and over. WORKAROUND
+- activation link tag DONE
+- Firefox extension that adds the about:config entry? - note: multi-provider support won't come before Firefox 18
 - Friendica seems to get confused when you click log out while the worker is doing its work - suddenly you are logged in again
 - sharing/unsharing
 - better contentPanels for ambient-notification icons
-- when browser is closed, session is also closed

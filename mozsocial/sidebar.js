@@ -1,3 +1,48 @@
+var end = location.href.indexOf("sidebar.js");
+var baselocation = location.href.substr(0, end);
+
+function sign_in() {
+  jQuery("#login-failed").hide();
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", baselocation + "../../mozsocial/userdata", true);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  xhr.onload = function(e) {
+    try {
+      var userdata = JSON.parse(xhr.responseText);
+      jQuery("#sign-in").hide();
+      // TODO: send event to worker so that get_user and get_notifications are called immediately
+    }
+    catch(e) {
+      jQuery("#login-failed").show();
+    }
+  }
+  xhr.onerror = function(e) {
+    jQuery("#login-failed").show();
+  }
+
+  var username = jQuery("#sign-in input[name=username]").val();
+  var password = jQuery("#sign-in input[name=password]").val();
+  var persistent = jQuery("#sign-in input[name=persistent]:checked").length;
+
+  var data = 'auth-params=login';
+  data += '&username='+encodeURIComponent(username);
+  data += '&password='+encodeURIComponent(password);
+  if (persistent) {
+    data += "&get-login-cookie=1";
+  }
+
+  xhr.send(data);
+
+  return false;
+}
+
+jQuery(document).ready(function() {
+  jQuery("#sign-in").off();
+  jQuery("#sign-in").on('submit', sign_in);
+});
+
 navigator.mozSocial.getWorker().port.onmessage = function onmessage(e) {
   var topic = e.data.topic;
   var data = e.data.data;
