@@ -14,6 +14,8 @@ var poll_interval = 40*1000;
 //poll_interval = 5*1000; // for debugging
 
 var user_job, notifications_job;
+var getting_user, reexecute_get_user = false;
+var trying_login_cookie = false;
 
 onconnect = function(e) {
     var port = e.ports[0];
@@ -51,6 +53,22 @@ onconnect = function(e) {
           get_notifications();
           user_job = setInterval(get_user, poll_interval);
           notifications_job = setInterval(get_notifications, poll_interval);
+        }
+        if (msg.topic == "social.cookies-get-response" && trying_login_cookie) {
+          var cookies = msg.data;
+          var password_found = false;
+
+          for (var i=0; i < cookies.length; i++) if (cookies[i].name == "mozsocial-password") {
+            password_found = true;
+          }
+
+          trying_login_cookie = false;
+          if (password_found) {
+            get_user(true);
+          }
+          else {
+            set_userdata({});
+          }
         }
         if (msg.topic == "social.user-recommend-prompt") { return;
           return;
@@ -91,6 +109,22 @@ function broadcast(topic, data) {
   }
 }
 
+function set_userdata(new_userdata) {
+  if (!apiPort) return;
+
+  if (new_userdata.userName != userdata.userName) {
+    userdata = new_userdata;
+    apiPort.postMessage({topic: "social.user-profile", data: userdata});
+    broadcast("social.user-profile", userdata);
+  }
+
+  getting_user = false;
+  if (reexecute_get_user) {
+    reexecute_get_user = false;
+    get_user();
+  }
+}
+
 function get_user(persistent_login) {
   /*
     - first, try if we get a valid userdata object, i.e. we are already logged in
@@ -98,59 +132,82 @@ function get_user(persistent_login) {
   */
 
   if (!apiPort) return;
+  var target = baselocation + "../../mozsocial/userdata?_="+(new Date().getTime());
+      // append timestamp to bypass cache: https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest#Bypassing_the_cache
+
+  // prevent parallel execution
+  if (getting_user && !persistent_login) {
+    dump("mozsocial: get_user already running for "+target+"\n");
+    reexecute_get_user = true;
+    return;
+  }
+  getting_user = true;
 
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", baselocation + "../../mozsocial/userdata", true);
-  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
   xhr.onload = function(e) {
     try {
       var json = xhr.responseText;
       new_userdata = JSON.parse(json);
 
-      if (!userdata.userName && !persistent_login) { // not logged in, try login cookie
-        // TODO: would be nicer if we only try that if there is a login cookie
-        get_user(true);
+      if (!new_userdata.userName && new_userdata.try_login_cookie && !persistent_login) { // not logged in, try login cookie
+        trying_login_cookie = true;
+        dump("mozsocial: get cookies to try login cookie for "+target+"\n");
+        apiPort.postMessage({topic: 'social.cookies-get'});
+      }
+      else if (!new_userdata.userName) { // not logged in
+        dump("mozsocial: not logged in on "+target+"\n");
+        set_userdata({});
+      }
+      else { // logged in
+        dump("mozsocial: logged in as "+new_userdata.userName+" on "+target+"\n");
+        set_userdata(new_userdata);
       }
     }
     catch(e) {
-      new_userdata = {};
+      dump("mozsocial: parsing JSON from "+target+" failed\n");
+      set_userdata({});
     }
-
-    if (new_userdata.userName != userdata.userName) {
-      userdata = new_userdata;
-      apiPort.postMessage({topic: "social.user-profile", data: userdata});
-    }
-
-    if (!userdata.userName) broadcast("notify", null); // reset sidebar if not logged in
   };
 
   xhr.onerror = function(e) {
-    new_userdata = {};
-
-    if (new_userdata.userName != userdata.userName) {
-      userdata = new_userdata;
-      apiPort.postMessage({topic: "social.user-profile", data: userdata});
-    }
-
-    if (!userdata.userName) broadcast("notify", null); // reset sidebar if not logged in
+    dump("mozsocial: xhr error for "+target+"\n");
+    set_userdata({});
   };
 
-  var data = '';
+  xhr.onabort = function(e) {
+    dump("mozsocial: xhr abort for "+target+"\n");
+    set_userdata({});
+  };
+
+  var request_data = '';
   if (persistent_login) {
-    data += "get-login-cookie=1";
-    data += "&auth-params=login";
-    data += "&try-login-cookie=1";
+    dump("mozsocial: try login cookie on "+target+"\n");
+    request_data += "get-login-cookie=1";
+    request_data += "&auth-params=login";
+    request_data += "&try-login-cookie=1";
   }
-  xhr.send(data);
+
+  try {
+    xhr.open("POST", target, true);
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhr.send(request_data);
+  }
+  catch (e) {
+    dump("mozsocial: xhr exception for "+target+"\n");
+    set_userdata({});
+  }
 }
 
 function get_notifications() {
   if (!apiPort) return;
   if (!userdata.userName) return;
 
+  var target = baselocation + "../../ping?_="+(new Date().getTime());
+      // append timestamp to bypass cache: https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest#Bypassing_the_cache
+
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", baselocation + "../../ping", true);
+  xhr.open("GET", target, true);
   xhr.onerror = function(e) {
     broadcast("notify", null);
   };

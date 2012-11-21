@@ -10,7 +10,7 @@ TODO:
 - in sidebar, special characters in usernames are displayed htmlencoded
 - persistent login PARTIALLY DONE
 	- remove login cookie on logout DONE
-	- prohibit password changing and admin functionality if session is started with login cookie NOT POSSIBLE AS ADDON
+	- prohibit password changing and admin functionality if session is started with login cookie (should be possible by redirect+killme in a settings_post hook)
 	- function to delete all remembered sessions DONE
 	- only try login cookie if we have one, otherwise we get login failed messages over and over. WORKAROUND
 - activation link tag DONE

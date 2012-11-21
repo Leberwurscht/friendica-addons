@@ -30,7 +30,8 @@ function sign_in() {
   data += '&username='+encodeURIComponent(username);
   data += '&password='+encodeURIComponent(password);
   if (persistent) {
-    data += "&get-login-cookie=1";
+    data += "&get-login-cookie=1"; // for built-in persistent login of this addon
+    data += "&remember=1"; // for native persistent login (since 3.0.1519)
   }
 
   xhr.send(data);
@@ -47,17 +48,23 @@ navigator.mozSocial.getWorker().port.onmessage = function onmessage(e) {
   var topic = e.data.topic;
   var data = e.data.data;
 
+  if (topic == "social.user-profile") {
+    // user changed, so empty notifications
+    $ul = jQuery('#nav-notifications-menu');
+    $ul.empty();
+
+    // hide sign in if user logged in, show if otherwise
+    if (data.userName) {
+      jQuery("#sign-in").hide();
+      jQuery("#nav-notifications-menu").show();
+    }
+    else {
+      jQuery("#sign-in").show();
+      jQuery("#nav-notifications-menu").hide();
+    }
+  }
   if (topic != "notify") return;
 
-  if (data) {
-    jQuery("#sign-in").hide();
-    jQuery("#nav-notifications-menu").show();
-  }
-  else {
-    jQuery("#sign-in").show();
-    jQuery("#nav-notifications-menu").hide();
-    return;
-  }
 
   var parser = new DOMParser();
   var doc = parser.parseFromString(data, "text/xml");

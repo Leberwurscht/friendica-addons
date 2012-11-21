@@ -9,32 +9,53 @@
 */
 
 function mozsocial_install() {
-  register_hook('authenticate', 'addon/mozsocial/mozsocial.php', 'mozsocial_authenticate_with_login_cookie');
-  register_hook('logged_in', 'addon/mozsocial/mozsocial.php', 'mozsocial_create_login_cookie');
-  register_hook('logging_out', 'addon/mozsocial/mozsocial.php', 'mozsocial_remove_login_cookie');
-
   register_hook('plugin_settings', 'addon/mozsocial/mozsocial.php', 'mozsocial_settings');
   register_hook('plugin_settings_post', 'addon/mozsocial/mozsocial.php', 'mozsocial_settings_post');
 
   register_hook('page_end', 'addon/mozsocial/mozsocial.php', 'mozsocial_add_manifest');
+
+  register_hook('authenticate', 'addon/mozsocial/mozsocial.php', 'mozsocial_authenticate_with_login_cookie');
+  register_hook('logged_in', 'addon/mozsocial/mozsocial.php', 'mozsocial_create_login_cookie');
+  register_hook('logging_out', 'addon/mozsocial/mozsocial.php', 'mozsocial_remove_login_cookie');
 }
 
 function mozsocial_uninstall() {
-  unregister_hook('authenticate', 'addon/mozsocial/mozsocial.php', 'mozsocial_authenticate_with_login_cookie');
-  unregister_hook('logged_in', 'addon/mozsocial/mozsocial.php', 'mozsocial_create_login_cookie');
-  unregister_hook('logging_out', 'addon/mozsocial/mozsocial.php', 'mozsocial_remove_login_cookie');
-
   unregister_hook('plugin_settings', 'addon/mozsocial/mozsocial.php', 'mozsocial_settings');
   unregister_hook('plugin_settings_post', 'addon/mozsocial/mozsocial.php', 'mozsocial_settings_post');
 
   unregister_hook('page_end', 'addon/mozsocial/mozsocial.php', 'mozsocial_add_manifest');
+
+  unregister_hook('authenticate', 'addon/mozsocial/mozsocial.php', 'mozsocial_authenticate_with_login_cookie');
+  unregister_hook('logged_in', 'addon/mozsocial/mozsocial.php', 'mozsocial_create_login_cookie');
+  unregister_hook('logging_out', 'addon/mozsocial/mozsocial.php', 'mozsocial_remove_login_cookie');
+}
+
+function mozsocial_remember_support() {
+  // check if this friendica version has support for persistent login (since 3.0.1519)
+  $version = split("\.", FRIENDICA_VERSION);
+  $first = intval($version[0]);
+  $second = intval($version[1]);
+  $third = intval($version[2]);
+
+  if (($first<3) || ($first==3 && $second==0 && $third<1519)) {
+    $support = false;
+  }
+  else {
+    $support = true;
+  }
+
+  return $support;
 }
 
 function mozsocial_module() {}
 function mozsocial_init(&$a) {
   if (count($a->argv)==2 && $a->argv[1]=="userdata") {
     if(!( $uid = local_user() )) {
-      echo "{}";
+      $info = Array();
+      $info["try_login_cookie"] = mozsocial_remember_support() ? 0 : 1;
+
+      header('Content-type: application/json');
+      echo json_encode($info);
       killme();
     }
 
@@ -55,6 +76,7 @@ function mozsocial_init(&$a) {
 
 function mozsocial_create_login_cookie($a,&$b) {
   if (!$_REQUEST['get-login-cookie']) return;
+  if (mozsocial_remember_support()) return;
 
   $uid = $b['uid'];
   $username = $b['nickname'];
@@ -95,8 +117,11 @@ function mozsocial_authenticate_with_login_cookie($a,&$b) {
   $r = q("SELECT * FROM `user` WHERE `nickname`='%s' AND `blocked` = 0 AND `verified` = 1 LIMIT 1",
     dbesc($_COOKIE["mozsocial-username"])
   );
-  if (!count($r)) killme(); // note: killme() instead of return to prevent "login failed" messages when worker sends try-login-cookie without having a login cookie. better: worker should check whether login cookie is available before making request
+  if (!count($r)) return;
   $user = $r[0];
+
+  // allow this login method only for older friendica versions
+  if (mozsocial_remember_support()) return;
 
   // get serial id
   $serial_id = $_COOKIE["mozsocial-serial-id"];
