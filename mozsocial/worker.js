@@ -50,7 +50,6 @@ onconnect = function(e) {
           if (notifications_job) clearInterval(notifications_job);
 
           get_user();
-          get_notifications();
           user_job = setInterval(get_user, poll_interval);
           notifications_job = setInterval(get_notifications, poll_interval);
         }
@@ -99,6 +98,13 @@ onconnect = function(e) {
         if (msg.topic == "social.user-unrecommend") {
           // TODO
         }
+        if (msg.topic == "logged-in-from-sidebar") {
+          get_user();
+          get_notifications();
+        }
+        if (msg.topic == "sidebar-loaded") {
+          get_notifications();
+        }
     }
 }
 
@@ -115,7 +121,7 @@ function set_userdata(new_userdata) {
   if (new_userdata.userName != userdata.userName) {
     userdata = new_userdata;
     apiPort.postMessage({topic: "social.user-profile", data: userdata});
-    broadcast("social.user-profile", userdata);
+    get_notifications();
   }
 
   getting_user = false;
@@ -201,7 +207,10 @@ function get_user(persistent_login) {
 
 function get_notifications() {
   if (!apiPort) return;
-  if (!userdata.userName) return;
+  if (!userdata.userName) {
+    broadcast("notify", {userdata: userdata});
+    return;
+  }
 
   var target = baselocation + "../../ping?_="+(new Date().getTime());
       // append timestamp to bypass cache: https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest#Bypassing_the_cache
@@ -209,11 +218,15 @@ function get_notifications() {
   var xhr = new XMLHttpRequest();
   xhr.open("GET", target, true);
   xhr.onerror = function(e) {
-    broadcast("notify", null);
+    broadcast("notify", {userdata: userdata});
+    dump("mozsocial: error retrieving /ping");
   };
   xhr.onload = function(e) {
     // update notifications in sidebar
-    broadcast("notify", xhr.responseText);
+    broadcast("notify", {
+      xml: xhr.responseText,
+      userdata: userdata
+    });
 
     // update counters - TODO: home counter?
     var xml = xhr.responseXML;

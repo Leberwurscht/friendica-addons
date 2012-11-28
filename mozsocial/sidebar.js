@@ -12,7 +12,9 @@ function sign_in() {
     try {
       var userdata = JSON.parse(xhr.responseText);
       jQuery("#sign-in").hide();
-      // TODO: send event to worker so that get_user and get_notifications are called immediately
+
+      // send event to worker so that get_user and get_notifications are called immediately
+      navigator.mozSocial.getWorker().port.postMessage({topic: "logged-in-from-sidebar"});
     }
     catch(e) {
       jQuery("#login-failed").show();
@@ -40,6 +42,8 @@ function sign_in() {
 }
 
 jQuery(document).ready(function() {
+  navigator.mozSocial.getWorker().port.postMessage({topic: "sidebar-loaded"});
+
   jQuery("#sign-in").off();
   jQuery("#sign-in").on('submit', sign_in);
 });
@@ -48,26 +52,19 @@ navigator.mozSocial.getWorker().port.onmessage = function onmessage(e) {
   var topic = e.data.topic;
   var data = e.data.data;
 
-  if (topic == "social.user-profile") {
-    // user changed, so empty notifications
-    $ul = jQuery('#nav-notifications-menu');
-    $ul.empty();
-
-    // hide sign in if user logged in, show if otherwise
-    if (data.userName) {
-      jQuery("#sign-in").hide();
-      jQuery("#nav-notifications-menu").show();
-    }
-    else {
-      jQuery("#sign-in").show();
-      jQuery("#nav-notifications-menu").hide();
-    }
-  }
   if (topic != "notify") return;
 
+  if (!data.userdata || !data.userdata.userName) {
+      jQuery("#sign-in").show();
+      jQuery("#nav-notifications-menu").hide();
+      return;
+  }
+
+  jQuery("#sign-in").hide();
+  jQuery("#nav-notifications-menu").show();
 
   var parser = new DOMParser();
-  var doc = parser.parseFromString(data, "text/xml");
+  var doc = parser.parseFromString(data.xml, "text/xml");
   var $doc = jQuery(doc);
 
   $ul = jQuery('#nav-notifications-menu');
