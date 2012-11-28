@@ -70,6 +70,11 @@ navigator.mozSocial.getWorker().port.onmessage = function onmessage(e) {
   $ul = jQuery('#nav-notifications-menu');
   $ul.empty();
 
+  if (!$doc.find("notif > note").length) {
+    var $li = jQuery('<li>No notifications.</li>');
+    $ul.append($li);
+  }
+
   $doc.find("notif > note").each(function() {
     var $this = jQuery(this);
 
