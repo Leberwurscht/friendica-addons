@@ -178,11 +178,12 @@ function mozsocial_remove_login_cookie($a, &$b) {
 
 function mozsocial_settings(&$a, &$s) {
   $s .= '<div class="settings-block">';
-  $s .= '<h3>Firefox social API</h3>';
-  $s .= '<div>';
-  $s .= ' <input type="submit" name="mozsocial-submit" value="remove remembered sessions" /><br />';
-  $s .= ' <input type="button" name="mozsocial-activate" onclick="var event = new CustomEvent(\'ActivateSocialFeature\'); document.dispatchEvent(event); return false;" value="activate" />';
-  $s .= '<br />';
+  $s .= '  <h3>Firefox social API</h3>';
+  $s .= '  <div>';
+  $s .= '    <input type="submit" name="mozsocial-submit" value="remove remembered sessions" /><br />';
+  $s .= '    <input type="button" name="mozsocial-activate" onclick="var event = new CustomEvent(\'ActivateSocialFeature\'); document.dispatchEvent(event); return false;" value="activate" />';
+  $s .= '    <br />';
+  $s .= '  </div>';
   $s .= '</div>';
 }
 
