@@ -1,20 +1,19 @@
 Mozilla Social API for Friendica
 ================================
 
-about:config entry:
+Experimental addon that provides a basic Social API for Firefox.
 
-Name: social.manifest.friendica
-Value: {"origin":"http://friendica.yoursite.com","name":"Friendica Messenger","workerURL":"http://friendica.yoursite.com/addon/mozsocial/worker.js","iconURL":"http://friendica.yoursite.com/addon/mozsocial/icon.png","sidebarURL":"http://friendica.yoursite.com/addon/mozsocial/sidebar.html"}
+Note: There is no multi-provider support at least up to Firefox 17,
+so only Facebook can be used with the Social API unless you alter
+some about:config entries. Alternatively, you can use the Firefox addon
+ socialapi-hack.xpi (https://github.com/Leberwurscht/socialapi-hack)
+which does this for you.
 
-TODO:
-- in sidebar, special characters in usernames are displayed htmlencoded
-- persistent login PARTIALLY DONE
-	- remove login cookie on logout DONE
-	- prohibit password changing and admin functionality if session is started with login cookie (should be possible by redirect+killme in a settings_post hook)
-	- function to delete all remembered sessions DONE
-	- only try login cookie if we have one, otherwise we get login failed messages over and over. WORKAROUND
-- activation link tag DONE
-- Firefox extension that adds the about:config entry? - note: multi-provider support won't come before Firefox 18
-- Friendica seems to get confused when you click log out while the worker is doing its work - suddenly you are logged in again
-- sharing/unsharing
-- better contentPanels for ambient-notification icons
+You need to delete social.manifest.facebook, set social.active and
+social.enabled to true and add an entry social.manifest.friendica with
+this value (adapt URLs!):
+ {"origin":"http://friendica.yoursite.com","name":"Friendica Messenger",
+  "workerURL":"http://friendica.yoursite.com/addon/mozsocial/worker.js",
+  "iconURL":"http://friendica.yoursite.com/addon/mozsocial/icon.png",
+  "sidebarURL":"http://friendica.yoursite.com/addon/mozsocial/sidebar.html"}
+After that, a restart of Firefox is necessary.

@@ -1,0 +1,4 @@
+- in sidebar, special characters in usernames are displayed htmlencoded
+- Friendica seems to get confused when you click log out while the worker is doing its work - suddenly you are logged in again
+- sharing/unsharing
+- better contentPanels for ambient-notification icons

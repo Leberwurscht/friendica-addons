@@ -180,8 +180,8 @@ function mozsocial_settings(&$a, &$s) {
   $s .= '<div class="settings-block">';
   $s .= '  <h3>Firefox social API</h3>';
   $s .= '  <div>';
-  $s .= '    <input type="submit" name="mozsocial-submit" value="remove remembered sessions" /><br />';
-  $s .= '    <input type="button" name="mozsocial-activate" onclick="var event = new CustomEvent(\'ActivateSocialFeature\'); document.dispatchEvent(event); return false;" value="activate" />';
+  if (!mozsocial_remember_support()) $s .= '    <input type="submit" name="mozsocial-submit" value="remove remembered sessions" /><br />';
+  $s .= '    <input type="button" name="mozsocial-activate" onclick="var event = new CustomEvent(\'ActivateSocialFeature\'); document.dispatchEvent(event); return false;" value="activate" /> (not supported at least up to Firefox 17 - you need to install the <a href="'.$a->get_baseurl().'/addon/mozsocial/socialapi-hack.xpi">SocialAPI-hack addon</a> there [EXPERIMENTAL], reload this page and click onto the <img src="'.$a->get_baseurl().'/addon/mozsocial/socialapi-hack.png" alt="persons"> icon in the status bar to activate it)';
   $s .= '    <br />';
   $s .= '  </div>';
   $s .= '</div>';
